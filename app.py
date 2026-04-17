@@ -3,243 +3,278 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
-import time
+from io import BytesIO
 
-# ---------------------------------------------------
+# -------------------------------------------------
 # PAGE CONFIG
-# ---------------------------------------------------
+# -------------------------------------------------
 st.set_page_config(
     page_title="AI Powered Clinical Gait Dashboard",
-    page_icon="🧠",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# ---------------------------------------------------
+# -------------------------------------------------
 # LOAD DATA
-# ---------------------------------------------------
+# -------------------------------------------------
 df = pd.read_csv("clinical_dashboard_15_subjects.csv")
-df.columns = df.columns.str.strip()
+df.columns = df.columns.str.strip().str.lower()
 
+# rename safe
+df.rename(columns={
+    "subject_id":"subject",
+    "subject id":"subject"
+}, inplace=True)
+
+# detect required cols
 subject_col = "subject"
 condition_col = "condition"
 
 numeric_cols = df.select_dtypes(include=np.number).columns.tolist()
 
-# ---------------------------------------------------
+# -------------------------------------------------
 # CUSTOM CSS
-# ---------------------------------------------------
+# -------------------------------------------------
 st.markdown("""
 <style>
 .main {
-    background-color: #f7f9fc;
+    background: linear-gradient(to right,#f8fbff,#eef5ff);
 }
-h1, h2, h3 {
-    color: #0f172a;
+h1,h2,h3 {
+    color:#0b1f4d;
 }
-div[data-testid="metric-container"] {
-    background: white;
-    border-radius: 15px;
-    padding: 15px;
-    box-shadow: 0px 4px 12px rgba(0,0,0,0.08);
+.stButton>button {
+    background:#0b1f4d;
+    color:white;
+    border-radius:10px;
+}
+.metric-box{
+    background:white;
+    padding:15px;
+    border-radius:12px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.08);
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------------------------------------------
+# -------------------------------------------------
 # SIDEBAR
-# ---------------------------------------------------
-st.sidebar.image("https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=600")
-st.sidebar.title("Clinical Gait AI")
+# -------------------------------------------------
+st.sidebar.title("📌 Navigation")
 
 page = st.sidebar.radio(
-    "Navigation",
+    "Select Page",
     [
         "🏠 Home Dashboard",
         "📊 Subject Comparison",
         "📈 Condition Analysis",
-        "📡 Live Monitoring",
-        "🤖 AI Insights Report"
+        "🤖 AI Report",
+        "🎥 Live Simulation"
     ]
 )
 
-# ---------------------------------------------------
+# -------------------------------------------------
 # HOME PAGE
-# ---------------------------------------------------
+# -------------------------------------------------
 if page == "🏠 Home Dashboard":
 
-    st.title("🏥 Clinical Gait Analysis Dashboard")
+    st.title("🧠 Clinical Gait Analysis Dashboard")
+
+    # AI generated reverse walking image
     st.image(
-        "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=1200",
+        "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1400&q=80",
         use_container_width=True
     )
 
-    st.markdown("### Smart AI Based Human Walking Analysis")
+    c1,c2,c3,c4 = st.columns(4)
 
-    c1, c2, c3, c4 = st.columns(4)
-
-    c1.metric("Subjects", df[subject_col].nunique())
-    c2.metric("Records", len(df))
+    c1.metric("Total Records", len(df))
+    c2.metric("Subjects", df[subject_col].nunique())
     c3.metric("Conditions", df[condition_col].nunique())
     c4.metric("Parameters", len(numeric_cols))
 
+    st.markdown("---")
+
     st.subheader("Dataset Preview")
-    st.dataframe(df, use_container_width=True)
+    st.dataframe(df.head(15), use_container_width=True)
 
-    param = st.selectbox("Choose Parameter", numeric_cols)
+    st.subheader("Average Walking Speed by Subject")
 
-    col1, col2 = st.columns(2)
+    speed_col = "walking_speed" if "walking_speed" in df.columns else numeric_cols[0]
 
-    with col1:
-        fig = px.bar(
-            df.groupby(subject_col)[param].mean().reset_index(),
-            x=subject_col,
-            y=param,
-            color=param,
-            title="Average by Subject"
-        )
-        st.plotly_chart(fig, use_container_width=True)
+    avg = df.groupby(subject_col)[speed_col].mean().reset_index()
 
-    with col2:
-        pie = px.pie(
-            df,
-            names=condition_col,
-            title="Condition Distribution"
-        )
-        st.plotly_chart(pie, use_container_width=True)
+    fig = px.bar(
+        avg,
+        x=subject_col,
+        y=speed_col,
+        color=speed_col,
+        text_auto=True
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
-# ---------------------------------------------------
+# -------------------------------------------------
 # SUBJECT COMPARISON
-# ---------------------------------------------------
+# -------------------------------------------------
 elif page == "📊 Subject Comparison":
 
-    st.title("📊 Compare Subjects")
+    st.title("📊 Subject Comparison Dashboard")
 
     subjects = sorted(df[subject_col].unique())
 
-    col1, col2 = st.columns(2)
+    c1,c2 = st.columns(2)
+    s1 = c1.selectbox("Select Subject 1", subjects)
+    s2 = c2.selectbox("Select Subject 2", subjects, index=1)
 
-    with col1:
-        s1 = st.selectbox("Select Subject 1", subjects)
+    param = st.selectbox("Choose Parameter", numeric_cols)
 
-    with col2:
-        s2 = st.selectbox("Select Subject 2", subjects, index=1)
+    d1 = df[df[subject_col]==s1][param].mean()
+    d2 = df[df[subject_col]==s2][param].mean()
 
-    param = st.selectbox("Select Parameter", numeric_cols)
-
-    d1 = df[df[subject_col] == s1][param].mean()
-    d2 = df[df[subject_col] == s2][param].mean()
-
-    compare_df = pd.DataFrame({
-        "Subject": [s1, s2],
-        "Value": [d1, d2]
+    comp = pd.DataFrame({
+        "Subject":[s1,s2],
+        "Value":[d1,d2]
     })
 
-    bar = px.bar(compare_df, x="Subject", y="Value", color="Subject",
-                 title="Bar Comparison")
-    st.plotly_chart(bar, use_container_width=True)
+    fig = px.bar(comp,x="Subject",y="Value",color="Subject",text_auto=True)
+    st.plotly_chart(fig,use_container_width=True)
 
-    # Radar chart
-    radar = go.Figure()
+    # radar graph
+    st.subheader("Radar Comparison")
 
-    vals1 = df[df[subject_col] == s1][numeric_cols].mean().values
-    vals2 = df[df[subject_col] == s2][numeric_cols].mean().values
+    radar_cols = numeric_cols[:6]
 
-    radar.add_trace(go.Scatterpolar(
-        r=vals1,
-        theta=numeric_cols,
+    r1 = df[df[subject_col]==s1][radar_cols].mean()
+    r2 = df[df[subject_col]==s2][radar_cols].mean()
+
+    fig2 = go.Figure()
+
+    fig2.add_trace(go.Scatterpolar(
+        r=r1.values,
+        theta=radar_cols,
         fill='toself',
         name=f"Subject {s1}"
     ))
 
-    radar.add_trace(go.Scatterpolar(
-        r=vals2,
-        theta=numeric_cols,
+    fig2.add_trace(go.Scatterpolar(
+        r=r2.values,
+        theta=radar_cols,
         fill='toself',
         name=f"Subject {s2}"
     ))
 
-    radar.update_layout(title="Radar Comparison")
-    st.plotly_chart(radar, use_container_width=True)
+    st.plotly_chart(fig2,use_container_width=True)
 
-# ---------------------------------------------------
+# -------------------------------------------------
 # CONDITION ANALYSIS
-# ---------------------------------------------------
+# -------------------------------------------------
 elif page == "📈 Condition Analysis":
 
     st.title("📈 Condition Analysis")
 
     param = st.selectbox("Choose Parameter", numeric_cols)
 
-    avg = df.groupby(condition_col)[param].mean().reset_index()
+    grp = df.groupby(condition_col)[param].mean().reset_index()
 
-    bar = px.bar(avg, x=condition_col, y=param,
-                 color=condition_col,
-                 title="Average by Condition")
-    st.plotly_chart(bar, use_container_width=True)
+    fig = px.pie(
+        grp,
+        names=condition_col,
+        values=param,
+        hole=0.45
+    )
+    st.plotly_chart(fig,use_container_width=True)
 
-    donut = px.pie(avg, names=condition_col, values=param, hole=0.5,
-                   title="Donut Chart")
-    st.plotly_chart(donut, use_container_width=True)
+    fig2 = px.bar(
+        grp,
+        x=condition_col,
+        y=param,
+        color=condition_col,
+        text_auto=True
+    )
+    st.plotly_chart(fig2,use_container_width=True)
 
-# ---------------------------------------------------
-# LIVE MONITORING
-# ---------------------------------------------------
-elif page == "📡 Live Monitoring":
-
-    st.title("📡 Live Sensor Monitoring")
-
-    param = st.selectbox("Choose Parameter", numeric_cols)
-
-    chart = st.empty()
-
-    data = []
-
-    for i in range(50):
-        data.append(np.random.randn() + df[param].mean())
-        live_df = pd.DataFrame(data, columns=[param])
-        fig = px.line(live_df, y=param, title="Live Signal")
-        chart.plotly_chart(fig, use_container_width=True)
-        time.sleep(0.1)
-
-# ---------------------------------------------------
+# -------------------------------------------------
 # AI REPORT
-# ---------------------------------------------------
-elif page == "🤖 AI Insights Report":
+# -------------------------------------------------
+elif page == "🤖 AI Report":
 
-    st.title("🤖 AI Medical Report")
+    st.title("🤖 AI Powered Subject Report")
 
-    param = st.selectbox("Choose Parameter", numeric_cols)
+    subjects = sorted(df[subject_col].unique())
+    s = st.selectbox("Select Subject", subjects)
 
-    c1, c2, c3 = st.columns(3)
+    user = df[df[subject_col]==s]
 
-    c1.metric("Average", round(df[param].mean(),2))
-    c2.metric("Maximum", round(df[param].max(),2))
-    c3.metric("Minimum", round(df[param].min(),2))
+    st.subheader(f"Subject {s} Overview")
 
-    best = df.groupby(subject_col)[param].mean().idxmax()
-    low = df.groupby(subject_col)[param].mean().idxmin()
+    c1,c2,c3 = st.columns(3)
 
-    st.success(f"Best performer for {param}: Subject {best}")
-    st.warning(f"Needs improvement: Subject {low}")
+    for_metric = numeric_cols[:3]
 
-    # download report
-    report = df.describe().to_csv(index=True).encode("utf-8")
+    c1.metric(for_metric[0], round(user[for_metric[0]].mean(),2))
+    c2.metric(for_metric[1], round(user[for_metric[1]].mean(),2))
+    c3.metric(for_metric[2], round(user[for_metric[2]].mean(),2))
+
+    st.subheader("Performance Graph")
+
+    vals = user[numeric_cols[:6]].mean()
+
+    fig = px.bar(
+        x=vals.index,
+        y=vals.values,
+        text_auto=True
+    )
+    st.plotly_chart(fig,use_container_width=True)
+
+    # AI Summary
+    st.subheader("AI Summary")
+
+    best = vals.idxmax()
+    worst = vals.idxmin()
+
+    st.success(f"Best parameter: {best}")
+    st.warning(f"Needs improvement: {worst}")
+
+    # downloadable report
+    report = f"""
+CLINICAL GAIT REPORT
+
+Subject: {s}
+
+Average Values:
+
+{vals.to_string()}
+
+Best Parameter: {best}
+Needs Improvement: {worst}
+
+Generated by AI Powered Dashboard
+"""
 
     st.download_button(
-        label="📥 Download Full AI Report",
-        data=report,
-        file_name="AI_Gait_Report.csv",
-        mime="text/csv"
+        "📥 Download Full AI Report",
+        report,
+        file_name=f"subject_{s}_report.txt"
     )
 
-    heat = px.imshow(df[numeric_cols].corr(),
-                     text_auto=True,
-                     title="Correlation Heatmap")
-    st.plotly_chart(heat, use_container_width=True)
+# -------------------------------------------------
+# LIVE SIMULATION
+# -------------------------------------------------
+elif page == "🎥 Live Simulation":
 
-# ---------------------------------------------------
-# FOOTER
-# ---------------------------------------------------
-st.markdown("---")
-st.write("Developed using Streamlit + AI + Plotly | Premium Dashboard")
+    st.title("🎥 Live Reverse Walking Simulation")
+
+    progress = st.progress(0)
+
+    for i in range(100):
+        progress.progress(i+1)
+
+    st.success("Simulation Completed")
+
+    sim_subject = st.selectbox("Select Subject", sorted(df[subject_col].unique()))
+
+    user = df[df[subject_col]==sim_subject]
+
+    st.line_chart(user[numeric_cols[:4]])
+
+    st.info("This graph simulates gait sensor signals during reverse walking.")
