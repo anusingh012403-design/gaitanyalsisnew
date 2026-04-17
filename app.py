@@ -1,286 +1,193 @@
 import streamlit as st
-import pandas as pd
-import numpy as np
-import plotly.express as px
-import plotly.graph_objects as go
 
-# ---------------------------------------------------
-# PAGE CONFIG
-# ---------------------------------------------------
 st.set_page_config(
-    page_title="Clinical Gait Dashboard",
+    page_title="Clinical Gait Analysis Dashboard",
+    page_icon="🦿",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# ---------------------------------------------------
-# LOAD DATA
-# ---------------------------------------------------
-df = pd.read_csv("clinical_dashboard_15_subjects.csv")
-
-# clean columns
-df.columns = df.columns.str.strip().str.lower()
-
-# rename columns if needed
-if "subject_id" in df.columns:
-    df.rename(columns={"subject_id": "subject"}, inplace=True)
-
-if "subject id" in df.columns:
-    df.rename(columns={"subject id": "subject"}, inplace=True)
-
-subject_col = "subject"
-condition_col = "condition"
-
-# ONLY real parameters (remove subject)
-numeric_cols = df.select_dtypes(include=np.number).columns.tolist()
-
-if subject_col in numeric_cols:
-    numeric_cols.remove(subject_col)
-
-# ---------------------------------------------------
-# CSS
-# ---------------------------------------------------
+# ---------- PAGE CSS ----------
 st.markdown("""
 <style>
-.main{
-background:linear-gradient(to right,#f8fbff,#edf5ff);
+.block-container {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+    max-width: 1200px;
 }
-h1,h2,h3{
-color:#102a43;
+
+[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
 }
-section[data-testid="stSidebar"]{
-background:#0f172a;
-color:white;
+
+[data-testid="stSidebar"] * {
+    color: white !important;
+}
+
+.hero-wrap {
+    background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 55%, #06b6d4 100%);
+    border-radius: 28px;
+    padding: 2.2rem;
+    color: white;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.18);
+    margin-bottom: 1.5rem;
+}
+
+.hero-title {
+    font-size: 3rem;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 0.7rem;
+}
+
+.hero-sub {
+    font-size: 1.05rem;
+    line-height: 1.8;
+    opacity: 0.96;
+    margin-bottom: 1rem;
+}
+
+.pill {
+    display: inline-block;
+    padding: 0.45rem 0.9rem;
+    margin-right: 0.5rem;
+    margin-top: 0.4rem;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.22);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.card {
+    background: white;
+    border-radius: 22px;
+    padding: 1.2rem 1rem;
+    box-shadow: 0 10px 25px rgba(2,6,23,0.08);
+    border: 1px solid rgba(15,23,42,0.06);
+    text-align: center;
+    height: 100%;
+}
+
+.card h3 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.8rem;
+    font-weight: 800;
+}
+
+.card p {
+    margin: 0.35rem 0 0;
+    color: #475569;
+    font-size: 0.96rem;
+}
+
+.section-head {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-top: 0.5rem;
+    margin-bottom: 0.8rem;
+}
+
+.info-box {
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 22px;
+    padding: 1.3rem;
+    border-left: 6px solid #2563eb;
+    box-shadow: 0 8px 20px rgba(15,23,42,0.06);
+}
+
+.info-box p {
+    color: #334155;
+    font-size: 1rem;
+    line-height: 1.8;
+    margin: 0;
+}
+
+.stImage img {
+    border-radius: 24px;
+    box-shadow: 0 14px 30px rgba(0,0,0,0.15);
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------------------------------------------
-# SIDEBAR
-# ---------------------------------------------------
-st.sidebar.title("📌 Navigation")
+# ---------- SIDEBAR ----------
+st.sidebar.image("https://cdn-icons-png.flaticon.com/512/3774/3774299.png", width=90)
+st.sidebar.title("Clinical Gait AI")
+st.sidebar.markdown("### Navigation")
+st.sidebar.markdown("- 🏠 Home Dashboard")
+st.sidebar.markdown("- 📊 Subject Comparison")
+st.sidebar.markdown("- 🧠 Condition Analysis")
+st.sidebar.markdown("- 📈 Monitoring")
+st.sidebar.markdown("- 🤖 AI Insights Report")
 
-page = st.sidebar.radio(
-    "Choose Page",
-    [
-        "🏠 Home Dashboard",
-        "📊 Subject Comparison",
-        "📈 Condition Analysis",
-        "🤖 AI Report",
-        "🎥 Live Simulation"
-    ]
-)
+# ---------- HERO ----------
+left, right = st.columns([1.15, 1])
 
-# ===================================================
-# HOME DASHBOARD
-# ===================================================
-if page == "🏠 Home Dashboard":
+with left:
+    st.markdown("""
+    <div class="hero-wrap">
+        <div class="hero-title">🦿 Clinical Gait Analysis Dashboard</div>
+        <div class="hero-sub">
+            Explore <b>Control</b>, <b>Reverse Walking</b>, and
+            <b>Reverse Walking using Smartphone</b> conditions with a clean,
+            interactive, and clinically inspired dashboard design.
+        </div>
+        <span class="pill">Reverse Walking</span>
+        <span class="pill">Spatiotemporal Analysis</span>
+        <span class="pill">Clinical Insights</span>
+    </div>
+    """, unsafe_allow_html=True)
 
-    st.title("🧠 Clinical Gait Analysis Dashboard")
-    st.subheader("AI Based Reverse Walking Monitoring")
-
-    # IMAGE REMOVED
-
-    c1,c2,c3,c4 = st.columns(4)
-
-    c1.metric("Total Records", len(df))
-    c2.metric("Subjects", df[subject_col].nunique())
-    c3.metric("Conditions", df[condition_col].nunique())
-    c4.metric("Parameters", len(numeric_cols))
-
-    st.markdown("---")
-
-    speed_col = numeric_cols[0]
-
-    col1,col2 = st.columns(2)
-
-    with col1:
-        avg = df.groupby(subject_col, as_index=False)[speed_col].mean()
-
-        fig = px.bar(
-            avg,
-            x=subject_col,
-            y=speed_col,
-            color=speed_col,
-            text_auto=True,
-            title="Average Parameter by Subject"
-        )
-        st.plotly_chart(fig, use_container_width=True)
-
-    with col2:
-        grp = df.groupby(condition_col, as_index=False)[speed_col].mean()
-
-        fig2 = px.pie(
-            grp,
-            names=condition_col,
-            values=speed_col,
-            hole=0.45,
-            title="Condition Distribution"
-        )
-        st.plotly_chart(fig2, use_container_width=True)
-
-    st.subheader("Dataset Preview")
-    st.dataframe(df.head(15), use_container_width=True)
-
-# ===================================================
-# SUBJECT COMPARISON
-# ===================================================
-elif page == "📊 Subject Comparison":
-
-    st.title("📊 Subject Comparison")
-
-    subjects = sorted(df[subject_col].unique())
-
-    col1,col2 = st.columns(2)
-
-    s1 = col1.selectbox("Select Subject 1", subjects)
-    s2 = col2.selectbox("Select Subject 2", subjects, index=1)
-
-    param = st.selectbox("Choose Parameter", numeric_cols)
-
-    # FIXED: subject removed from parameter list
-
-    val1 = df[df[subject_col]==s1][param].mean()
-    val2 = df[df[subject_col]==s2][param].mean()
-
-    compare_df = pd.DataFrame({
-        "Subject":[s1,s2],
-        "Value":[val1,val2]
-    })
-
-    fig = px.bar(
-        compare_df,
-        x="Subject",
-        y="Value",
-        color="Subject",
-        text_auto=True,
-        title="Bar Comparison"
-    )
-    st.plotly_chart(fig, use_container_width=True)
-
-    # Radar Graph
-    st.subheader("Radar Comparison")
-
-    radar_cols = numeric_cols[:6]
-
-    r1 = df[df[subject_col]==s1][radar_cols].mean()
-    r2 = df[df[subject_col]==s2][radar_cols].mean()
-
-    fig2 = go.Figure()
-
-    fig2.add_trace(go.Scatterpolar(
-        r=r1.values,
-        theta=radar_cols,
-        fill='toself',
-        name=f"Subject {s1}"
-    ))
-
-    fig2.add_trace(go.Scatterpolar(
-        r=r2.values,
-        theta=radar_cols,
-        fill='toself',
-        name=f"Subject {s2}"
-    ))
-
-    st.plotly_chart(fig2, use_container_width=True)
-
-# ===================================================
-# CONDITION ANALYSIS
-# ===================================================
-elif page == "📈 Condition Analysis":
-
-    st.title("📈 Condition Analysis")
-
-    param = st.selectbox("Choose Parameter", numeric_cols)
-
-    grp = df.groupby(condition_col, as_index=False)[param].mean()
-
-    fig = px.bar(
-        grp,
-        x=condition_col,
-        y=param,
-        color=condition_col,
-        text_auto=True,
-        title="Average by Condition"
-    )
-    st.plotly_chart(fig, use_container_width=True)
-
-    fig2 = px.pie(
-        grp,
-        names=condition_col,
-        values=param,
-        hole=0.45,
-        title="Condition Pie Chart"
-    )
-    st.plotly_chart(fig2, use_container_width=True)
-
-# ===================================================
-# AI REPORT
-# ===================================================
-elif page == "🤖 AI Report":
-
-    st.title("🤖 AI Subject Report")
-
-    subjects = sorted(df[subject_col].unique())
-
-    s = st.selectbox("Choose Subject", subjects)
-
-    user = df[df[subject_col]==s]
-
-    vals = user[numeric_cols[:6]].mean()
-
-    c1,c2,c3 = st.columns(3)
-
-    c1.metric("Average", round(vals.mean(),2))
-    c2.metric("Maximum", round(vals.max(),2))
-    c3.metric("Minimum", round(vals.min(),2))
-
-    fig = px.bar(
-        x=vals.index,
-        y=vals.values,
-        text_auto=True,
-        title="Performance Parameters"
-    )
-    st.plotly_chart(fig, use_container_width=True)
-
-    best = vals.idxmax()
-    weak = vals.idxmin()
-
-    st.success(f"Best Parameter: {best}")
-    st.warning(f"Needs Improvement: {weak}")
-
-    report = f"""
-CLINICAL GAIT REPORT
-
-Subject : {s}
-
-Average Values:
-
-{vals.to_string()}
-
-Best Parameter : {best}
-Needs Improvement : {weak}
-
-Generated by AI Dashboard
-"""
-
-    st.download_button(
-        "📥 Download Report",
-        report,
-        file_name=f"subject_{s}_report.txt"
+with right:
+    st.image(
+        "https://pplx-res.cloudinary.com/image/upload/pplx_search_images/b2c3638e0351aea65ba1dda28a9bc1c056653996.jpg",
+        use_container_width=True
     )
 
-# ===================================================
-# LIVE SIMULATION
-# ===================================================
-elif page == "🎥 Live Simulation":
+# ---------- HIGHLIGHTS ----------
+st.markdown('<div class="section-head">Dashboard Highlights</div>', unsafe_allow_html=True)
+c1, c2, c3 = st.columns(3)
 
-    st.title("🎥 Live Reverse Walking Simulation")
+with c1:
+    st.markdown("""
+    <div class="card">
+        <h3>3</h3>
+        <p>Subjects</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-    st.info("Sensor Motion Simulation")
+with c2:
+    st.markdown("""
+    <div class="card">
+        <h3>9</h3>
+        <p>Total Trials</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-    s = st.selectbox("Choose Subject", sorted(df[subject_col].unique()))
+with c3:
+    st.markdown("""
+    <div class="card">
+        <h3>3</h3>
+        <p>Walking Conditions</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-    user = df[df[subject_col]==s]
+# ---------- ABOUT ----------
+st.markdown('<div class="section-head">About This Project</div>', unsafe_allow_html=True)
+st.markdown("""
+<div class="info-box">
+    <p>
+        This dashboard focuses on clinical gait analysis with special attention to
+        reverse walking performance. It helps compare subjects across different walking
+        conditions using parameters such as speed, cadence, stride length, symmetry,
+        and gait profile measures. Reverse walking is commonly studied in rehabilitation
+        and movement analysis because it can reveal changes in balance, coordination,
+        and lower-limb control.
+    </p>
+</div>
+""", unsafe_allow_html=True)
 
-    st.line_chart(user[numeric_cols[:4]])
+st.markdown("### 🚀 Start exploring from the sidebar")
+st.info("Use Subject Comparison, Condition Analysis, Monitoring, and AI Insights to navigate your report.")
