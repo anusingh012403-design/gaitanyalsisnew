@@ -1,0 +1,4 @@
+subject,condition,walking_speed,stride_length,cadence,hip_rom,knee_rom,ankle_rom,emg_quad,emg_hamstring,emg_ta,emg_gastro
+Shashank,Control,0.94,1.09,108,34.05,59.5,26.1,,,,
+Shashank,Reverse Walking,0.52,0.66,1525,25.1,35.9,22.1,,,,
+Shashank,Reverse Walking using Smart Phone,0.65,0.84,808,27.6,40.55,22.65,,,,
