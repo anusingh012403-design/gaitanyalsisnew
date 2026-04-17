@@ -1,7 +1,7 @@
-# ==============================
-# ADVANCED 5 PAGE GAIT DASHBOARD
-# Replace full app.py with this
-# ==============================
+# ==========================================================
+# ADVANCED PROFESSIONAL HOME PAGE + FULL DASHBOARD
+# Replace complete app.py with this code
+# ==========================================================
 
 import streamlit as st
 import pandas as pd
@@ -10,38 +10,49 @@ import plotly.express as px
 import plotly.graph_objects as go
 import time
 
-# --------------------------------
+# ----------------------------------------------------------
 # PAGE CONFIG
-# --------------------------------
+# ----------------------------------------------------------
 st.set_page_config(
-    page_title="Advanced Clinical Gait Dashboard",
+    page_title="Clinical Gait Analysis Dashboard",
     layout="wide",
     page_icon="🧠"
 )
 
-# --------------------------------
-# STYLE
-# --------------------------------
+# ----------------------------------------------------------
+# PROFESSIONAL CSS
+# ----------------------------------------------------------
 st.markdown("""
 <style>
-.main {
-    background-color:#f7fafc;
+.main{
+    background:#f8fafc;
 }
-h1,h2,h3 {
+h1,h2,h3{
     color:#0f172a;
 }
-[data-testid="metric-container"] {
-    background: white;
+[data-testid="metric-container"]{
+    background:white;
     border:1px solid #e2e8f0;
-    padding:15px;
+    padding:18px;
     border-radius:14px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.05);
+}
+.hero{
+    padding:20px;
+    background:linear-gradient(90deg,#0f172a,#1e293b);
+    color:white;
+    border-radius:16px;
+}
+.small-note{
+    color:#475569;
+    font-size:14px;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# --------------------------------
+# ----------------------------------------------------------
 # LOAD DATA
-# --------------------------------
+# ----------------------------------------------------------
 @st.cache_data
 def load_data():
     df = pd.read_csv("clinical_dashboard_15_subjects.csv")
@@ -58,9 +69,9 @@ numeric_cols = df.select_dtypes(include=np.number).columns.tolist()
 if subject_col in numeric_cols:
     numeric_cols.remove(subject_col)
 
-# --------------------------------
+# ----------------------------------------------------------
 # SIDEBAR
-# --------------------------------
+# ----------------------------------------------------------
 st.sidebar.title("🧭 Navigation")
 
 page = st.sidebar.radio(
@@ -74,13 +85,20 @@ page = st.sidebar.radio(
     ]
 )
 
-# ======================================================
-# PAGE 1 HOME DASHBOARD
-# ======================================================
+# ==========================================================
+# PAGE 1 HOME DASHBOARD (PROFESSIONAL)
+# ==========================================================
 if page == "🏠 Home Dashboard":
 
-    st.title("🧠 Advanced Clinical Gait Dashboard")
-    st.markdown("### Multi Subject Motion Analysis System")
+    st.markdown("""
+    <div class='hero'>
+        <h1>🧠 Advanced Clinical Gait Dashboard</h1>
+        <h3>AI Powered Reverse Walking • EMG • Motion Analysis</h3>
+        <p>Clinical biomechanics monitoring platform for subject movement analysis.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.write("")
 
     c1,c2,c3,c4 = st.columns(4)
 
@@ -91,6 +109,39 @@ if page == "🏠 Home Dashboard":
 
     st.markdown("---")
 
+    # --------------------------------------------
+    # PROFESSIONAL IMAGE SECTION
+    # --------------------------------------------
+    st.subheader("🎥 Clinical Reverse Walking Lab Setup")
+
+    col1,col2,col3 = st.columns(3)
+
+    with col1:
+        st.image(
+            "https://images.unsplash.com/photo-1518611012118-696072aa579a",
+            caption="Sensor Based Walking Analysis",
+            use_container_width=True
+        )
+
+    with col2:
+        st.image(
+            "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b",
+            caption="Camera Lab Motion Capture",
+            use_container_width=True
+        )
+
+    with col3:
+        st.image(
+            "https://images.unsplash.com/photo-1517836357463-d25dfeac3438",
+            caption="Reverse Gait Monitoring",
+            use_container_width=True
+        )
+
+    st.markdown("---")
+
+    # --------------------------------------------
+    # CHARTS
+    # --------------------------------------------
     col1,col2 = st.columns(2)
 
     with col1:
@@ -101,7 +152,7 @@ if page == "🏠 Home Dashboard":
             x=subject_col,
             y="walking_speed",
             color="walking_speed",
-            title="Average Walking Speed",
+            title="Average Walking Speed by Subject",
             template="plotly_white"
         )
         st.plotly_chart(fig, use_container_width=True)
@@ -110,18 +161,19 @@ if page == "🏠 Home Dashboard":
         fig2 = px.pie(
             df,
             names=condition_col,
-            title="Condition Distribution",
+            title="Walking Condition Distribution",
             template="plotly_white"
         )
         st.plotly_chart(fig2, use_container_width=True)
 
     st.markdown("---")
-    st.subheader("Dataset Preview")
+
+    st.subheader("📋 Dataset Preview")
     st.dataframe(df, use_container_width=True)
 
-# ======================================================
+# ==========================================================
 # PAGE 2 SUBJECT COMPARISON
-# ======================================================
+# ==========================================================
 elif page == "📊 Subject Comparison":
 
     st.title("📊 Subject Comparison Dashboard")
@@ -144,28 +196,14 @@ elif page == "📊 Subject Comparison":
     col1,col2 = st.columns(2)
 
     with col1:
-        fig = px.bar(
-            compare,
-            x="Subject",
-            y="Value",
-            color="Subject",
-            text="Value",
-            title="Bar Comparison",
-            template="plotly_white"
-        )
+        fig = px.bar(compare,x="Subject",y="Value",color="Subject",
+                     text="Value",template="plotly_white")
         st.plotly_chart(fig, use_container_width=True)
 
     with col2:
-        fig2 = px.pie(
-            compare,
-            names="Subject",
-            values="Value",
-            title="Pie Comparison",
-            template="plotly_white"
-        )
+        fig2 = px.pie(compare,names="Subject",values="Value",
+                      template="plotly_white")
         st.plotly_chart(fig2, use_container_width=True)
-
-    st.subheader("Radar Comparison")
 
     radar_params = numeric_cols[:6]
 
@@ -175,26 +213,20 @@ elif page == "📊 Subject Comparison":
     radar = go.Figure()
 
     radar.add_trace(go.Scatterpolar(
-        r=r1,
-        theta=radar_params,
-        fill='toself',
-        name=f"Subject {s1}"
+        r=r1, theta=radar_params, fill='toself', name=f"Subject {s1}"
     ))
 
     radar.add_trace(go.Scatterpolar(
-        r=r2,
-        theta=radar_params,
-        fill='toself',
-        name=f"Subject {s2}"
+        r=r2, theta=radar_params, fill='toself', name=f"Subject {s2}"
     ))
 
     radar.update_layout(template="plotly_white")
 
     st.plotly_chart(radar, use_container_width=True)
 
-# ======================================================
+# ==========================================================
 # PAGE 3 LIVE MONITORING
-# ======================================================
+# ==========================================================
 elif page == "📡 Live Monitoring":
 
     st.title("📡 Live Monitoring")
@@ -204,7 +236,7 @@ elif page == "📡 Live Monitoring":
 
     vals = df[df[subject_col]==subject][param].values
 
-    chart = st.empty()
+    holder = st.empty()
 
     for i in range(len(vals)):
         temp = pd.DataFrame({
@@ -213,20 +245,17 @@ elif page == "📡 Live Monitoring":
         })
 
         fig = px.line(
-            temp,
-            x="Time",
-            y="Value",
+            temp,x="Time",y="Value",
             markers=True,
-            title=f"Live {param}",
             template="plotly_white"
         )
 
-        chart.plotly_chart(fig, use_container_width=True)
-        time.sleep(0.5)
+        holder.plotly_chart(fig, use_container_width=True)
+        time.sleep(0.4)
 
-# ======================================================
+# ==========================================================
 # PAGE 4 CLINICAL REPORT
-# ======================================================
+# ==========================================================
 elif page == "📄 Clinical Report":
 
     st.title("📄 Subject Clinical Report")
@@ -241,17 +270,14 @@ elif page == "📄 Clinical Report":
     c2.metric("Avg Cadence", round(sub["cadence"].mean(),2))
     c3.metric("Avg Stride", round(sub["stride_length"].mean(),2))
 
-    st.markdown("---")
-
-    report_df = sub[numeric_cols].mean().reset_index()
-    report_df.columns = ["Parameter","Value"]
+    report = sub[numeric_cols].mean().reset_index()
+    report.columns = ["Parameter","Value"]
 
     fig = px.bar(
-        report_df,
+        report,
         x="Parameter",
         y="Value",
         color="Value",
-        title=f"Subject {subject} Report",
         template="plotly_white"
     )
 
@@ -262,15 +288,15 @@ elif page == "📄 Clinical Report":
     csv = sub.to_csv(index=False)
 
     st.download_button(
-        "📥 Download Full Subject Report",
+        "📥 Download Subject Report",
         csv,
         file_name=f"Subject_{subject}_Report.csv",
         mime="text/csv"
     )
 
-# ======================================================
-# PAGE 5 FULL DATASET INSIGHTS
-# ======================================================
+# ==========================================================
+# PAGE 5 FULL DATASET
+# ==========================================================
 elif page == "📁 Full Dataset Insights":
 
     st.title("📁 Full Dataset Insights")
@@ -280,24 +306,18 @@ elif page == "📁 Full Dataset Insights":
     avg = df.groupby(subject_col)[param].mean().reset_index()
 
     fig = px.line(
-        avg,
-        x=subject_col,
-        y=param,
+        avg,x=subject_col,y=param,
         markers=True,
-        title=f"{param} Across Subjects",
         template="plotly_white"
     )
 
     st.plotly_chart(fig, use_container_width=True)
 
-    st.subheader("Summary Statistics")
     st.dataframe(df.describe(), use_container_width=True)
-
-    full_csv = df.to_csv(index=False)
 
     st.download_button(
         "📥 Download Full Dataset",
-        full_csv,
-        file_name="Full_Gait_Dataset.csv",
+        df.to_csv(index=False),
+        file_name="Full_Dataset.csv",
         mime="text/csv"
     )
